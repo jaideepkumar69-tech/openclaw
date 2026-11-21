@@ -11,7 +11,7 @@ import {
   getChatBranchesQueryState,
   loadChatBranches,
 } from "./chat-history-branches.ts";
-import { chatHistoryRequests } from "./chat-history-state.ts";
+import { chatHistoryRequests, isChatSessionProvenAbsent } from "./chat-history-state.ts";
 import type { ChatMobileHost, MobileDetailsRoute } from "./chat-mobile-host.ts";
 import { ChatPaneBrowserAnnotationRender } from "./chat-pane-browser-annotation-render.ts";
 import { chatDetailsDockingLayout } from "./chat-snapshot-prewarm.ts";
@@ -393,7 +393,10 @@ export abstract class ChatPaneHeaderLayout extends ChatPaneBrowserAnnotationRend
                 backTo: { area: "details" },
               });
             },
-            onOpenProcesses: this.showDetailsProcess,
+            onOpenProcesses:
+              !selectedSession && isChatSessionProvenAbsent(state)
+                ? undefined
+                : this.showDetailsProcess,
           } satisfies Partial<ChatDetailsProps>),
           mobileBindings: {
             sharing: this.prepareSessionSharing(selectedSession, {

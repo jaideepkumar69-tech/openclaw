@@ -12,6 +12,7 @@ import { focusComposerInput } from "../../lib/composer-input.ts";
 import { scopedAgentParamsForSession } from "../../lib/sessions/navigation.ts";
 import { resolveUiConversationIdentity } from "../../lib/sessions/session-key.ts";
 import { resolveSessionWorkspace } from "../../lib/sessions/workspace.ts";
+import { isChatSessionProvenAbsent } from "./chat-history-state.ts";
 import { PaneOutboxRecovery } from "./chat-outbox-recovery.tsx";
 import { PaneAttachmentCatalog } from "./chat-pane-attachment-catalog.ts";
 import { sidebarPanelDefinitions } from "./chat-pane-embedded-panels.ts";
@@ -217,6 +218,8 @@ export abstract class ChatPaneLayoutRender extends ChatPaneHeaderLayout {
     // Only a full pane has a Subagents panel of its own. Elsewhere a subagent's
     // name still opens its session and their count stays text.
     const ownsSubagentsPanel = !catalog && !this.compact;
+    // A main conversation has no row (processes, extension authority) until its first turn.
+    const unstarted = !selectedSession && isChatSessionProvenAbsent(state);
     const subagentStop =
       chatProps.disabledBanner?.presentation &&
       chatProps.canAbort &&
@@ -246,6 +249,7 @@ export abstract class ChatPaneLayoutRender extends ChatPaneHeaderLayout {
           ? { ...chatProps.disabledBanner, stop: subagentStop }
           : chatProps.disabledBanner,
       mobileComposer: Boolean(mobileHost),
+      sessionAdmitted: Boolean(selectedSession),
       get showNewMessages() {
         return canShowNewMessages && chatProps.showNewMessages;
       },
@@ -290,7 +294,7 @@ export abstract class ChatPaneLayoutRender extends ChatPaneHeaderLayout {
         : undefined,
       onOpenSubagent: ownsSubagentsPanel ? (key) => this.showSubagents(key) : undefined,
       onOpenSubagents: ownsSubagentsPanel ? (focus) => this.showSubagents(null, focus) : undefined,
-      onOpenProcesses: ownsSubagentsPanel ? this.showDetailsProcess : undefined,
+      onOpenProcesses: ownsSubagentsPanel && !unstarted ? this.showDetailsProcess : undefined,
       composerRecovery: recovery,
       pluginToolIcons: this.toolIcons,
       presented: {
